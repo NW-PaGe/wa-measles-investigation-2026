@@ -1,1 +1,0 @@
-New version of client (18.15.0) available at https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/LATEST/linux-amd64/datasets.
