@@ -1,0 +1,9 @@
+builds:
+  - genome
+custom_subsample:
+    genome:
+        samples:
+            outbreak:
+              exclude_all: True
+              include:
+               - defaults/outbreak_strains.txt

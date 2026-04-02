@@ -1,0 +1,250 @@
+Assuming unrestricted shared filesystem usage.
+None
+host: 21bc7f627c34
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 14
+Rules claiming more threads will be scaled down.
+Job stats:
+job                            count
+---------------------------  -------
+all                                1
+curate                             1
+download_ppx_meta                  1
+download_ppx_seqs                  1
+extract_open_data                  1
+format_ppx_ndjson                  1
+get_nextclade_dataset              1
+join_metadata_and_nextclade        1
+nextclade_metadata                 1
+run_nextclade                      1
+subset_metadata                    1
+total                             11
+
+Select jobs to execute...
+Execute 3 jobs...
+[Fri Jan 23 20:50:01 2026]
+localrule download_ppx_meta:
+    output: data/ppx_metadata.csv
+    jobid: 4
+    reason: Forced execution
+    resources: tmpdir=/tmp
+Shell command: 
+        curl -fsSL 'https://lapis.pathoplexus.org/measles/sample/details?dataFormat=csv&versionStatus=LATEST_VERSION&fields=accessionVersion,accession,version,submitter,groupName,submittedDate,releasedDate,dataUseTerms,dataUseTermsRestrictedUntil,dataUseTermsUrl,assemblyReferenceGenomeAccession,authorAffiliations,authors,bioprojectAccession,biosampleAccession,completeness,displayName,earliestReleaseDate,frameShifts,genotype,geoLocAdmin1,geoLocAdmin2,geoLocCity,geoLocCountry,geoLocLatitude,geoLocLongitude,geoLocSite,hostAge,hostAgeBin,hostDisease,hostGender,hostHealthOutcome,hostHealthState,hostNameCommon,hostOriginCountry,hostVaccinationStatus,insdcAccessionBase,insdcAccessionFull,insdcRawReadsAccession,insdcVersion,isLabHost,length,ncbiReleaseDate,ncbiSourceDb,ncbiSubmitterCountry,ncbiUpdateDate,ncbiVirusName,ncbiVirusTaxId,purposeOfSampling,purposeOfSequencing,qualityControlDetails,qualityControlDetermination,qualityControlIssues,qualityControlMethodName,qualityControlMethodVersion,sampleCollectionDate,sampleCollectionDateRangeLower,sampleCollectionDateRangeUpper,sampleType,totalAmbiguousNucs,totalDeletedNucs,totalFrameShifts,totalInsertedNucs,totalSnps,totalUnknownNucs,travelHistory'         | csvtk mutate2 -n is_reference -e '""' > data/ppx_metadata.csv
+        
+[Fri Jan 23 20:50:01 2026]
+localrule get_nextclade_dataset:
+    output: data/nextclade_data/nextstrain/measles/N450/WHO-2012.zip
+    log: logs/get_nextclade_dataset.txt
+    jobid: 9
+    benchmark: benchmarks/get_nextclade_dataset.txt
+    reason: Forced execution
+    resources: tmpdir=/tmp
+Shell command: 
+        exec &> >(tee logs/get_nextclade_dataset.txt)
+
+        nextclade3 dataset get \
+            --name=nextstrain/measles/N450/WHO-2012 \
+            --output-zip=data/nextclade_data/nextstrain/measles/N450/WHO-2012.zip \
+            --verbose
+        
+[Fri Jan 23 20:50:01 2026]
+localrule download_ppx_seqs:
+    output: data/ppx_sequences.fasta
+    jobid: 3
+    reason: Forced execution
+    resources: tmpdir=/tmp
+Shell command: 
+        curl -fsSL 'https://lapis.pathoplexus.org/measles/sample/unalignedNucleotideSequences?versionStatus=LATEST_VERSION' -o data/ppx_sequences.fasta
+        
+[Fri Jan 23 20:50:03 2026]
+Finished jobid: 9 (Rule: get_nextclade_dataset)
+1 of 11 steps (9%) done
+[Fri Jan 23 20:50:04 2026]
+Finished jobid: 4 (Rule: download_ppx_meta)
+2 of 11 steps (18%) done
+[Fri Jan 23 20:50:09 2026]
+Finished jobid: 3 (Rule: download_ppx_seqs)
+3 of 11 steps (27%) done
+Select jobs to execute...
+Execute 1 jobs...
+[Fri Jan 23 20:50:09 2026]
+localrule format_ppx_ndjson:
+    input: data/ppx_sequences.fasta, data/ppx_metadata.csv
+    output: data/ppx.ndjson
+    log: logs/format_ppx_ndjson.txt
+    jobid: 2
+    reason: Forced execution
+    resources: tmpdir=/tmp
+Shell command: 
+        augur curate passthru             --metadata data/ppx_metadata.csv             --fasta data/ppx_sequences.fasta             --seq-id-column accessionVersion             --seq-field sequence             --unmatched-reporting warn             --duplicate-reporting warn             2> logs/format_ppx_ndjson.txt > data/ppx.ndjson
+        
+[Fri Jan 23 20:50:11 2026]
+Finished jobid: 2 (Rule: format_ppx_ndjson)
+4 of 11 steps (36%) done
+Select jobs to execute...
+Execute 1 jobs...
+[Fri Jan 23 20:50:11 2026]
+localrule curate:
+    input: data/ppx.ndjson, /nextstrain/build/ingest/defaults/geolocation_rules.tsv, /nextstrain/build/ingest/defaults/annotations.tsv
+    output: data/all_metadata.tsv, results/sequences.fasta
+    log: logs/curate.txt
+    jobid: 1
+    benchmark: benchmarks/curate.txt
+    reason: Forced execution
+    resources: tmpdir=/tmp
+Shell command: 
+        exec &> >(tee logs/curate.txt)
+
+        cat data/ppx.ndjson \
+            | augur curate rename \
+                --field-map sampleCollectionDate=date displayName=strain earliestReleaseDate=date_submitted accessionVersion=PPX_accession insdcAccessionFull=INSDC_accession ncbiVirusName=virus_name geoLocCountry=country geoLocAdmin1=division geoLocAdmin2=location genotype=genotype_ppx hostNameCommon=host insdcRawReadsAccession=sra_accession dataUseTermsRestrictedUntil=restrictedUntil dataUseTermsUrl=dataUseTerms__url authorAffiliations=institution \
+            | augur curate normalize-strings \
+            | augur curate transform-strain-name \
+                --strain-regex '^.+$' \
+                --backup-fields  \
+            | augur curate format-dates \
+                --date-fields date date_submitted \
+                --expected-date-formats %Y %Y-%m %Y-%m-%d %Y-%m-%dT%H:%M:%SZ \
+            | augur curate titlecase \
+                --titlecase-fields region country division location \
+                --articles and d de del des di do en l la las le los nad of op sur the y \
+                --abbreviations USA \
+            | augur curate abbreviate-authors \
+                --authors-field authors \
+                --default-value '?' \
+                --abbr-authors-field abbr_authors \
+            | augur curate apply-geolocation-rules \
+                --geolocation-rules /nextstrain/build/ingest/defaults/geolocation_rules.tsv \
+            | python /nextstrain/build/ingest/bin/curate-urls.py \
+            | augur curate apply-record-annotations \
+                --annotations /nextstrain/build/ingest/defaults/annotations.tsv \
+                --id-field accession \
+                --output-metadata data/all_metadata.tsv \
+                --output-fasta results/sequences.fasta \
+                --output-id-field accession \
+                --output-seq-field sequence
+        
+[Fri Jan 23 20:50:18 2026]
+Finished jobid: 1 (Rule: curate)
+5 of 11 steps (45%) done
+Select jobs to execute...
+Execute 2 jobs...
+[Fri Jan 23 20:50:18 2026]
+localrule run_nextclade:
+    input: data/nextclade_data/nextstrain/measles/N450/WHO-2012.zip, results/sequences.fasta
+    output: results/nextclade.tsv, results/alignment.fasta, results/translations.zip
+    log: logs/run_nextclade.txt
+    jobid: 8
+    benchmark: benchmarks/run_nextclade.txt
+    reason: Forced execution
+    resources: tmpdir=/tmp
+Shell command: 
+        exec &> >(tee logs/run_nextclade.txt)
+
+        nextclade3 run \
+            results/sequences.fasta \
+            --input-dataset data/nextclade_data/nextstrain/measles/N450/WHO-2012.zip \
+            --output-tsv results/nextclade.tsv \
+            --output-fasta results/alignment.fasta \
+            --output-translations 'results/translations/{cds}.fasta'
+
+        zip -rj results/translations.zip results/translations
+        
+[Fri Jan 23 20:50:18 2026]
+localrule subset_metadata:
+    input: data/all_metadata.tsv
+    output: data/subset_metadata.tsv
+    jobid: 6
+    reason: Forced execution
+    resources: tmpdir=/tmp
+Shell command: 
+        csvtk cut -t -f strain,date,accession,PPX_accession,PPX_accession__url,INSDC_accession,INSDC_accession__url,region,country,division,location,host,genotype_ppx,date_submitted,sra_accession,authors,institution,dataUseTerms,dataUseTerms__url,restrictedUntil,is_reference             data/all_metadata.tsv > data/subset_metadata.tsv
+        
+[Fri Jan 23 20:50:19 2026]
+Finished jobid: 6 (Rule: subset_metadata)
+6 of 11 steps (55%) done
+[Fri Jan 23 20:50:25 2026]
+Finished jobid: 8 (Rule: run_nextclade)
+7 of 11 steps (64%) done
+Select jobs to execute...
+Execute 1 jobs...
+[Fri Jan 23 20:50:25 2026]
+localrule nextclade_metadata:
+    input: results/nextclade.tsv
+    output: results/nextclade_metadata.tsv
+    log: logs/nextclade_metadata.txt
+    jobid: 7
+    benchmark: benchmarks/nextclade_metadata.txt
+    reason: Forced execution
+    resources: tmpdir=/tmp
+Shell command: 
+        exec &> >(tee logs/nextclade_metadata.txt)
+
+        augur curate rename \
+            --metadata results/nextclade.tsv \
+            --id-column seqName \
+            --field-map seqName=seqName clade=clade coverage=coverage totalMissing=missing_data totalSubstitutions=divergence totalNonACGTNs=nonACGTN qc.overallStatus=QC_overall qc.missingData.status=QC_missing_data qc.mixedSites.status=QC_mixed_sites qc.privateMutations.status=QC_rare_mutations qc.snpClusters.status=QC_snp_clusters qc.frameShifts.status=QC_frame_shifts qc.stopCodons.status=QC_stop_codons frameShifts=frame_shifts privateNucMutations.reversionSubstitutions=private_reversion_substitutions privateNucMutations.labeledSubstitutions=private_labeled_substitutions privateNucMutations.unlabeledSubstitutions=private_unlabeled_substitutions privateNucMutations.totalReversionSubstitutions=private_total_reversion_substitutions privateNucMutations.totalLabeledSubstitutions=private_total_labeled_substitutions privateNucMutations.totalUnlabeledSubstitutions=private_total_unlabeled_substitutions privateNucMutations.totalPrivateSubstitutions=private_total_private_substitutions qc.snpClusters.clusteredSNPs=private_snp_clusters qc.snpClusters.totalSNPs=private_total_snp_clusters \
+            --output-metadata - \
+        | csvtk cut -t --fields seqName,clade,coverage,missing_data,divergence,nonACGTN,QC_overall,QC_missing_data,QC_mixed_sites,QC_rare_mutations,QC_snp_clusters,QC_frame_shifts,QC_stop_codons,frame_shifts,private_reversion_substitutions,private_labeled_substitutions,private_unlabeled_substitutions,private_total_reversion_substitutions,private_total_labeled_substitutions,private_total_unlabeled_substitutions,private_total_private_substitutions,private_snp_clusters,private_total_snp_clusters \
+        > results/nextclade_metadata.tsv
+        
+[Fri Jan 23 20:50:27 2026]
+Finished jobid: 7 (Rule: nextclade_metadata)
+8 of 11 steps (73%) done
+Select jobs to execute...
+Execute 1 jobs...
+[Fri Jan 23 20:50:27 2026]
+localrule join_metadata_and_nextclade:
+    input: data/subset_metadata.tsv, results/nextclade_metadata.tsv
+    output: results/metadata.tsv
+    log: logs/join_metadata_and_nextclade.txt
+    jobid: 5
+    benchmark: benchmarks/join_metadata_and_nextclade.txt
+    reason: Forced execution
+    resources: tmpdir=/tmp
+Shell command: 
+        exec &> >(tee logs/join_metadata_and_nextclade.txt)
+
+        augur merge \
+            --metadata \
+                metadata=data/subset_metadata.tsv \
+                nextclade=results/nextclade_metadata.tsv \
+            --metadata-id-columns \
+                metadata=accession \
+                nextclade=seqName \
+            --output-metadata results/metadata.tsv \
+            --no-source-columns
+        
+[Fri Jan 23 20:50:32 2026]
+Finished jobid: 5 (Rule: join_metadata_and_nextclade)
+9 of 11 steps (82%) done
+Removing temporary output results/nextclade_metadata.tsv.
+Select jobs to execute...
+Execute 1 jobs...
+[Fri Jan 23 20:50:32 2026]
+localrule extract_open_data:
+    input: results/metadata.tsv, results/sequences.fasta
+    output: results/metadata_open.tsv, results/sequences_open.fasta
+    jobid: 10
+    reason: Forced execution
+    resources: tmpdir=/tmp
+Shell command: 
+        augur filter --metadata results/metadata.tsv                      --sequences results/sequences.fasta                      --metadata-id-columns accession                      --exclude-where "dataUseTerms=RESTRICTED"                      --output-metadata results/metadata_open.tsv                      --output-sequences results/sequences_open.fasta
+        
+[Fri Jan 23 20:50:34 2026]
+Finished jobid: 10 (Rule: extract_open_data)
+10 of 11 steps (91%) done
+Select jobs to execute...
+Execute 1 jobs...
+[Fri Jan 23 20:50:34 2026]
+localrule all:
+    input: results/sequences.fasta, results/metadata.tsv, results/sequences_open.fasta, results/metadata_open.tsv
+    jobid: 0
+    reason: Forced execution
+    resources: tmpdir=/tmp
+Shell command: None
+[Fri Jan 23 20:50:34 2026]
+Finished jobid: 0 (Rule: all)
+11 of 11 steps (100%) done
+Complete log(s): /nextstrain/build/ingest/.snakemake/log/2026-01-23T205001.166694.snakemake.log

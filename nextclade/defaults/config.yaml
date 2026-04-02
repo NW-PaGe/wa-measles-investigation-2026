@@ -1,0 +1,25 @@
+strain_id_field: "accession"
+files:
+    exclude: "dropped_strains.txt"
+    include: "include_strains.txt"
+    reference_N450: "measles_reference_N450.gb"
+    reference_N450_fasta: "measles_reference_N450.fasta"
+    clades: "clades.tsv"
+    colors: "colors.tsv"
+    auspice_config: "auspice_config.json"
+align_and_extract_N450:
+    min_length: 400
+    min_seed_cover: 0.01
+filter:
+    group_by: "region genotype_ncbi year"
+    subsample_max_sequences: 500
+    min_date: 1950
+    min_length: 400
+refine:
+    coalescent: "opt"
+    date_inference: "marginal"
+    clock_filter_iqd: 4
+ancestral:
+    inference: "joint"
+export:
+    metadata_columns: "strain division location"

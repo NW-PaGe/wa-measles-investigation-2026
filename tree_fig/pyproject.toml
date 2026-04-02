@@ -1,0 +1,12 @@
+[project]
+name = "tree-fig"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "baltic==0.2.2",
+    "matplotlib>=3.10.8",
+    "pandas>=3.0.1",
+    "requests>=2.32.5",
+]

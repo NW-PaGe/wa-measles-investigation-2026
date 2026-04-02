@@ -1,0 +1,47 @@
+from snakemake.utils import min_version
+
+# Minimum Snakemake version needed for the storage plugins used in remote_files.smk
+min_version("8.0.0")
+
+include: "../shared/vendored/snakemake/config.smk"
+
+configfile: os.path.join(workflow.basedir, "defaults/config.yaml")
+
+if os.path.exists("config.yaml"):
+    configfile: "config.yaml"
+
+include: "rules/config.smk"
+
+builds = config['builds']
+
+wildcard_constraints:
+    build = "|".join(builds)
+
+rule all:
+    input:
+        auspice_json = expand("auspice/measles_{build}.json", build=builds),
+        tip_frequencies_json = expand("auspice/measles_{build}_tip-frequencies.json", build=builds)
+
+include: "../shared/vendored/snakemake/remote_files.smk"
+include: "rules/merge_inputs.smk"
+if "genome" in builds:
+    include: "rules/prepare_sequences.smk"
+if "N450" in builds:
+    include: "rules/prepare_sequences_N450.smk"
+include: "rules/construct_phylogeny.smk"
+include: "rules/annotate_phylogeny.smk"
+include: "rules/export.smk"
+
+# Include custom rules defined in the config.
+if "custom_rules" in config:
+    for rule_file in config["custom_rules"]:
+
+        include: os.path.join(os.getcwd(), rule_file)
+
+rule clean:
+    """Removing directories: {params}"""
+    params:
+        "results ",
+        "auspice"
+    shell:
+        "rm -rfv {params}"
