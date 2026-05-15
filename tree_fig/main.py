@@ -244,7 +244,7 @@ def main():
     fig, ax = plt.subplots(figsize=(7.5, 10.5), facecolor="w", layout="constrained")
     x_attr = lambda k: k.divergence
     
-    subtree.plotTree(ax, x_attr=x_attr, colour="gray")
+    subtree_summarized.plotTree(ax, x_attr=x_attr, colour="gray")
     #plotting just the combo leaves
     subtree_summarized.plotPoints(
          ax,
