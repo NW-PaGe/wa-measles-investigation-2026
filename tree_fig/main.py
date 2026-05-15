@@ -365,7 +365,11 @@ def main():
         return subtree_reduced
     
     subtree_reduced = prune_branches(subtree_summarized, strip = True)
-
+    # modify the stock sorting function to sort based on divergence rather than length, since this is a divergence tree
+    mod=-1
+    sort_function=lambda k: (k.is_node(),-len(k.leaves)*mod,k.divergence*mod) if k.is_node() else (k.is_node(),k.divergence*mod)
+    # use the new sort function to order the branches and make them pretty
+    subtree_reduced.sortBranches(sort_function=sort_function)
     print(f"The reduced tree stats are {subtree_reduced.treeStats()}")
 
     fig, ax = plt.subplots(figsize=(7.5, 10.5), facecolor="w", layout="constrained")
