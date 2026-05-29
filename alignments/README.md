@@ -11,7 +11,7 @@ Sequences were aligned using `augur align` to maintain consistency with the phyl
 augur align --sequences ./*.fa --output <county>.fasta
 ```
 
-Aligments were visualized with a [web-based viewer](https://github.com/DOH-PNT0303/streamlit_align_and_view_app).
+Aligments vizualization and stats were generated with a [web-based viewer](https://github.com/DOH-PNT0303/streamlit_align_and_view_app). These can be viewed by opening the `.html` folder within each subdirectory under `alignments`
 
 ### County A
 
