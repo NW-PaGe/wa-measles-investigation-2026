@@ -2,7 +2,7 @@
 
 ## Alignments for Washington Sequences and Their Matches - County A
 
-The genome from County A ([PP_004J958](https://pathoplexus.org/seq/PP_004J958.2)) matched 162 sequences from South Carolina, so getting these matches into a post-hoc alignment was more involved (not practical to click through the tree in auspice to pull those data).
+The genome from County A ([PP_004J958](https://pathoplexus.org/seq/PP_004J958.2)) matched 161 sequences from South Carolina, so getting these matches into a post-hoc alignment was more involved (not practical to click through the tree in auspice to pull those data).
 
 This assumes you have already run the phylogenetic workflow. If not, see the top-level README.md and run it, so that the dataset and tree are available.
 
@@ -37,6 +37,4 @@ Then align using `augur align`:
 augur align --sequences county_a_filtered.fasta -o county_a_aligned.fasta
 ```
 
-This alignment and it's statistics can be visualized by opening `county_a.html`.
-
-Aligments were generated with a [web-based viewer](https://github.com/DOH-PNT0303/streamlit_align_and_view_app).
+This alignment and it's statistics can be visualized by using the alignment viewer of your choice. We examined this alignment using a [web-based viewer](https://github.com/DOH-PNT0303/streamlit_align_and_view_app).
