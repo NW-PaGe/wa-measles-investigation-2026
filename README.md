@@ -30,7 +30,14 @@ Dependencies for phylogenetic tree manipulation/vizualization:
 
  ### Process the tree with python
 
+This will extract the subtree which contains only the Washington outbreak sequences and related contextual samples, and process same-state within-polytomy leaves into aggregate leaves.
+
  ```
  cd tree_fig/ &&
  uv run main.py
  ```
+
+ ### Additional Alignments
+
+ Some alignments were generated to visualize the matches between the Washington and South Carolina sequences. This was done for each individual introduction. These are available in the `alignments/` directory. HTML files will contain the alignments and related stats. See the `alignments/` directory for more info.
+
