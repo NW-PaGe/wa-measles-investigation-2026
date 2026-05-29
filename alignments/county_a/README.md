@@ -37,4 +37,6 @@ Then align using `augur align`:
 augur align --sequences county_a_filtered.fasta -o county_a_aligned.fasta
 ```
 
-Aligments were visualized with a [web-based viewer](https://github.com/DOH-PNT0303/streamlit_align_and_view_app).
+This alignment and it's statistics can be visualized by opening `county_a.html`.
+
+Aligments were generated with a [web-based viewer](https://github.com/DOH-PNT0303/streamlit_align_and_view_app).
